@@ -1,0 +1,2312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Notes</title>
+    <!-- FontAwesome para iconos limpios -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #1e3d59;
+            --accent-sky: #438a5e;
+            --accent-sky-light: #e8f1f5;
+            --bright-sky: #3498db;
+            --danger-red: #e74c3c;
+            --pure-white: #ffffff;
+            --bg-color: #f4f7f6;
+            --text-color: #333333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 15px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .notes-container {
+            max-width: 100%;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* Cabecera */
+        .notes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--primary-blue);
+            color: var(--pure-white);
+            padding: 12px 20px;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .notes-header h2 {
+            font-size: 1.2rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Botones Generales */
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: background 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--bright-sky);
+            color: var(--pure-white);
+        }
+        .btn-primary:hover { background-color: #2980b9; }
+
+        .btn-accent {
+            background-color: var(--pure-white);
+            color: var(--primary-blue);
+        }
+        .btn-accent:hover { background-color: var(--accent-sky-light); }
+
+        .btn-danger {
+            background-color: var(--danger-red);
+            color: var(--pure-white);
+        }
+        .btn-danger:hover { background-color: #c0392b; }
+
+        /* Barra de Búsqueda */
+        .search-bar {
+            position: relative;
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .search-bar i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 10px 38px 10px 35px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            outline: none;
+            background-color: var(--pure-white);
+            font-size: 0.9rem;
+        }
+
+        .search-bar input:focus {
+            border-color: var(--bright-sky);
+        }
+
+        .notes-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        .search-clear {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            border: 0;
+            background: transparent;
+            color: #667085;
+            cursor: pointer;
+            padding: 6px;
+        }
+
+        .notes-toolbar select, .note-field {
+            min-height: 38px;
+            padding: 8px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background: var(--pure-white);
+            color: #344054;
+        }
+
+        /* Grid de Notas */
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-bottom: 10px;
+        }
+
+        /* Tarjeta de Nota individual */
+        .note-card {
+            background-color: var(--pure-white);
+            border-left: 4px solid var(--bright-sky);
+            border-radius: 6px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            height: 180px;
+        }
+
+        .note-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .note-title {
+            font-weight: bold;
+            font-size: 1rem;
+            color: var(--primary-blue);
+            margin-bottom: 6px;
+            word-break: break-word;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .note-card.is-trash { opacity: 0.8; border-left-color: #98a2b3; }
+        .note-card.is-favorite { border-top: 3px solid #f4b740; }
+        .note-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0 0 5px; }
+        .note-tag {
+            display: inline-block;
+            max-width: 130px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            border-radius: 999px;
+            padding: 2px 8px;
+            color: #17466c;
+            background: #eaf3fb;
+            font-size: 0.7rem;
+        }
+
+        .note-body {
+            font-size: 0.85rem;
+            color: #555;
+            flex-grow: 1;
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            max-height: 80px;
+        }
+
+        .note-images {
+            display: flex;
+            gap: 6px;
+            max-height: 54px;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .note-images a, .note-images img {
+            width: 48px;
+            height: 48px;
+            border-radius: 4px;
+        }
+
+        .note-images img { object-fit: cover; }
+
+        .note-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--accent-sky-light);
+            padding-top: 8px;
+        }
+
+        .note-date {
+            font-size: 0.7rem;
+            color: #888;
+        }
+
+        .note-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #666;
+            transition: color 0.2s;
+        }
+        .icon-btn[hidden], .btn[hidden] { display: none !important; }
+        .icon-btn.copy:hover { color: var(--primary-blue); }
+        .icon-btn.edit:hover { color: var(--bright-sky); }
+        .icon-btn.delete:hover { color: var(--danger-red); }
+        .icon-btn.favorite { color: #a15c07; }
+        .icon-btn.restore:hover { color: #087443; }
+
+        /* Modal / Formulario Flotante */
+        .modal {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding: 16px;
+        }
+
+        .modal.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background-color: var(--pure-white);
+            padding: 20px;
+            border-radius: 8px;
+            width: min(80vw, 980px);
+            max-height: 90vh;
+            max-height: 90dvh;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-top: 5px solid var(--primary-blue);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .modal-content h3 {
+            color: var(--primary-blue);
+        }
+
+        .modal-content input, .modal-content textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+            font-size: 0.9rem;
+        }
+
+        .modal-content input:focus, .modal-content textarea:focus {
+            border-color: var(--bright-sky);
+        }
+
+        .modal-content textarea {
+            flex: 1;
+            resize: none;
+            min-height: 100px;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .modal-content .note-field { width: 100%; }
+        .note-editor-options { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .favorite-toggle { display: inline-flex; align-items: center; gap: 8px; color: #475467; font-size: 0.9rem; }
+        .draft-status { color: #667085; font-size: 0.78rem; }
+        .modal-content.auth { width: min(90%, 380px); height: auto; }
+        .import-options { height: auto; width: min(92vw, 460px); }
+        .import-options p { color: #475467; line-height: 1.5; }
+        .import-choice { justify-content: space-between; flex-wrap: wrap; }
+        .settings-content { width: min(92vw, 440px); height: auto; }
+        .settings-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .settings-account {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding: 14px;
+            border: 1px solid #e8e1d7;
+            border-radius: 13px;
+            background: #fffdf9;
+        }
+        .settings-account strong { color: #292723; font-size: .9rem; }
+        .settings-account span, .settings-hint { color: #716b60; font-size: .8rem; line-height: 1.5; overflow-wrap: anywhere; }
+        .settings-theme-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 14px;
+            border: 1px solid #e8e1d7;
+            border-radius: 13px;
+            background: #fffdf9;
+        }
+        .settings-theme-copy { display: flex; flex-direction: column; gap: 4px; }
+        .settings-theme-copy strong { color: #292723; font-size: .9rem; }
+        .settings-theme-copy span { color: #716b60; font-size: .78rem; }
+        .theme-toggle { position: relative; flex: 0 0 44px; width: 44px !important; height: 26px; padding: 0 !important; border: 0 !important; border-radius: 999px !important; background: #c9c3b8 !important; cursor: pointer; appearance: none; transition: background .18s ease; }
+        .theme-toggle::after { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); content: ""; transition: transform .18s ease; }
+        .theme-toggle:checked { background: #f45b3e !important; }
+        .theme-toggle:checked::after { transform: translateX(18px); }
+        .theme-toggle:focus-visible { outline: 3px solid rgba(244,91,62,.3); outline-offset: 3px; }
+        .settings-error { min-height: 0; color: var(--danger-red); font-size: .82rem; }
+        .settings-error:empty { display: none; }
+        .settings-confirm { display: flex; flex-direction: column; gap: 10px; }
+        .settings-confirm[hidden] { display: none; }
+        .toast {
+            position: fixed;
+            z-index: 2000;
+            left: 50%;
+            bottom: calc(24px + env(safe-area-inset-bottom));
+            transform: translate(-50%, 12px);
+            padding: 11px 18px;
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 999px;
+            color: #fff;
+            background: #292723;
+            box-shadow: 0 8px 24px rgba(41,39,35,.2);
+            font-size: .88rem;
+            font-weight: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .18s ease, transform .18s ease;
+        }
+        .toast.visible { transform: translate(-50%, 0); opacity: 1; }
+
+        .attachment-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .attachment-toolbar input { display: none; }
+        .attachment-previews { display: flex; gap: 8px; max-height: 105px; overflow-x: auto; }
+        .attachment-preview { position: relative; flex: 0 0 76px; width: 76px; height: 76px; }
+        .attachment-preview img { width: 100%; height: 100%; border-radius: 5px; object-fit: cover; }
+        .attachment-preview button {
+            position: absolute; top: 2px; right: 2px; width: 22px; height: 22px; padding: 0;
+            border: 0; border-radius: 50%; background: var(--danger-red); color: var(--pure-white); cursor: pointer;
+        }
+
+        /* En pantallas pequeñas (celular) usa más espacio */
+        @media (max-width: 700px) {
+            .modal-content {
+                width: 95vw;
+                max-height: 92vh;
+                max-height: 92dvh;
+            }
+            .notes-header { align-items: flex-start; gap: 10px; flex-direction: column; }
+            .header-actions { width: 100%; flex-wrap: wrap; }
+            .notes-toolbar { align-items: stretch; }
+            .search-bar { flex-basis: 100%; }
+            .notes-toolbar select { flex: 1; min-width: 130px; }
+            .note-card { min-height: 180px; }
+            .modal { align-items: flex-start; }
+            .modal-content { margin: auto 0; }
+            .note-view-content { margin: auto 0; }
+            .modal-actions .btn { min-height: 42px; }
+        }
+
+        .note-view-content {
+            width: min(70vw, 900px);
+            max-height: 85vh;
+            max-height: 85dvh;
+            overflow: hidden;
+        }
+
+        .note-view-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .note-view-date { color: #888; font-size: 0.8rem; }
+        .note-view-body {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+            padding: 12px;
+            border: 1px solid #dce5e9;
+            border-radius: 6px;
+            color: #444;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+        .note-view-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            max-height: 24%;
+            overflow: auto;
+        }
+        .note-view-images img {
+            display: block;
+            max-width: 180px;
+            max-height: 130px;
+            border-radius: 5px;
+            object-fit: contain;
+        }
+
+        @media (max-width: 700px) {
+            .note-view-content {
+                width: 92vw;
+                max-height: 90vh;
+                max-height: 90dvh;
+            }
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        /* Sincronización / Login */
+        .sync-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.75rem;
+            color: #cfe3f1;
+            padding: 0 4px;
+            white-space: nowrap;
+        }
+        .sync-status.ok i { color: #7be0a0; }
+        .sync-status.error i { color: #ff9b8f; }
+        .sync-status.syncing i { color: #ffd37a; }
+
+        .modal-content.auth {
+            width: 90%;
+            max-width: 380px;
+            height: auto;
+        }
+        .auth-hint { font-size: 0.85rem; color: #666; }
+        .auth-error { font-size: 0.8rem; color: var(--danger-red); min-height: 1em; }
+
+        @media (max-width: 480px) {
+            .sync-status span { display: none; }
+            .notes-header h2 { font-size: 1.05rem; }
+            .header-actions .btn, .header-actions label { min-height: 40px; }
+        }
+        /* Interfaz renovada */
+        :root {
+            --primary-blue: #102a43;
+            --accent-sky: #1f6fb2;
+            --accent-sky-light: #eaf3fb;
+            --bright-sky: #1f6fb2;
+            --danger-red: #c44d45;
+            --pure-white: #ffffff;
+            --bg-color: #eef4fb;
+            --text-color: #344054;
+            --muted: #667085;
+            --line: #d8e2ee;
+            --surface: #ffffff;
+            --shadow-card: 0 5px 18px rgba(16, 42, 67, .055);
+        }
+        body { padding: 22px 28px; background: var(--bg-color); color: var(--text-color); }
+        .notes-container { max-width: 1500px; gap: 18px; }
+        .notes-header {
+            background: #102a43; border-radius: 16px; padding: 18px 22px;
+            box-shadow: 0 8px 24px rgba(16, 42, 67, .14); gap: 20px;
+        }
+        .notes-brand { display: flex; align-items: center; gap: 13px; min-width: 220px; }
+        .brand-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 13px; color: #eaf3fb; background: rgba(255,255,255,.12); font-size: 1.15rem; }
+        .notes-brand h2 { font-size: 1.1rem; letter-spacing: .01em; }
+        .notes-brand p { margin-top: 4px; color: #cbd9e8; font-size: .78rem; }
+        .header-actions { align-items: center; justify-content: flex-end; gap: 12px; }
+        .header-tools { display: flex; align-items: center; gap: 4px; padding: 4px; border: 1px solid rgba(255,255,255,.15); border-radius: 11px; }
+        .header-divider { width: 1px; height: 20px; margin: 0 3px; background: rgba(255,255,255,.2); }
+        .btn { min-height: 38px; padding: 8px 13px; border-radius: 9px; font-size: .84rem; transition: background .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease; }
+        .btn:focus-visible, .icon-btn:focus-visible, .filter-tab:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid rgba(31, 111, 178, .28); outline-offset: 2px; }
+        .btn-secondary { color: #125c98; background: #eaf3fb; }
+        .btn-secondary:hover { background: #d9efff; }
+        .btn-primary { background: #ffffff; color: #102a43; box-shadow: 0 3px 9px rgba(16, 42, 67, .12); }
+        .btn-primary:hover { background: #eaf3fb; transform: translateY(-1px); }
+        .btn-tool { min-width: 38px; justify-content: center; padding: 8px 10px; color: #eff8f2; background: transparent; }
+        .btn-tool:hover { color: white; background: rgba(255,255,255,.14); }
+        .sync-status { padding: 7px 10px; border-radius: 999px; color: #e2eee7; background: rgba(255,255,255,.09); font-size: .73rem; }
+        .sync-status.ok { color: #d8eaff; background: rgba(31, 111, 178, .22); }
+        .sync-status.error { color: #ffd1c8; background: rgba(203, 84, 69, .18); }
+        .sync-status.syncing { color: #ffe6ab; background: rgba(219, 171, 79, .17); }
+        .notes-toolbar { display: flex; align-items: center; gap: 12px; margin: 0; padding: 13px; border: 1px solid #d8e2ee; border-radius: 14px; background: rgba(255,255,255,.94); box-shadow: 0 2px 8px rgba(16,42,67,.035); }
+        .search-bar { flex: 1 1 250px; min-width: 190px; }
+        .search-bar i { left: 14px; color: #667085; }
+        .search-bar input { min-height: 42px; padding: 10px 42px; border: 1px solid #d8e2ee; border-radius: 10px; background: #fff; font-size: .9rem; }
+        .search-bar input:focus { border-color: #6aa6d8; box-shadow: 0 0 0 3px rgba(31,111,178,.12); }
+        .search-clear { right: 10px; }
+        .filter-tabs { display: flex; flex: 0 0 auto; gap: 3px; padding: 4px; border-radius: 10px; background: #f3f8ff; }
+        .filter-tab { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 7px 11px; border: 0; border-radius: 8px; color: #667085; background: transparent; font: 600 .79rem 'Segoe UI', Tahoma, sans-serif; cursor: pointer; transition: all .18s ease; }
+        .filter-tab:hover { color: #125c98; background: rgba(255,255,255,.7); }
+        .filter-tab.active { color: #102a43; background: #fff; box-shadow: 0 2px 6px rgba(16,42,67,.09); }
+        .filter-native { display: none !important; }
+        .toolbar-selects { display: flex; gap: 8px; }
+        .notes-toolbar select, .note-field { min-height: 40px; padding: 8px 30px 8px 11px; border: 1px solid #d8e2ee; border-radius: 9px; color: #344054; background-color: #ffffff; font-size: .79rem; }
+        .notes-grid { min-height: 0; grid-template-columns: repeat(auto-fill, minmax(245px, 1fr)); gap: 16px; padding: 2px 3px 14px; scrollbar-color: #cbd9e8 transparent; }
+        .note-card { position: relative; height: auto; min-height: 218px; padding: 16px; overflow: hidden; border: 1px solid #d8e2ee; border-left: 3px solid #1f6fb2; border-radius: 13px; background: var(--surface); box-shadow: var(--shadow-card); cursor: default; }
+        .note-card::before { position: absolute; inset: 0 0 auto; height: 3px; background: transparent; content: ''; }
+        .note-card:hover { transform: translateY(-3px); border-color: #d8e2ee; box-shadow: 0 12px 24px rgba(16,42,67,.1); }
+        .note-card.is-favorite::before { background: #e6b84f; }
+        .note-card.is-trash { opacity: .74; border-left-color: #a8b0ad; }
+        .note-title { margin: 1px 0 8px; color: #102a43; font-size: 1rem; line-height: 1.35; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .note-meta { min-height: 0; margin: 0 0 9px; gap: 5px; }
+        .note-tag { max-width: 145px; padding: 4px 9px; color: #125c98; background: #eaf3fb; font-size: .68rem; font-weight: 600; }
+        .note-body { display: -webkit-box; flex: 1 1 auto; max-height: none; margin: 0 0 10px; overflow: hidden; color: #475467; font-size: .83rem; line-height: 1.55; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
+        .note-images { max-height: 58px; margin-bottom: 9px; }
+        .note-images:empty { display: none; }
+        .note-images a, .note-images img { width: 54px; height: 54px; border-radius: 8px; }
+        .note-footer { margin-top: auto; padding-top: 10px; border-top-color: #eaf3fb; }
+        .note-date { color: #667085; font-size: .68rem; }
+        .note-actions { gap: 3px; }
+        .icon-btn { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; color: #667085; font-size: .82rem; }
+        .icon-btn:hover { background: #eaf3fb; }
+        .icon-btn.see:hover, .icon-btn.copy:hover { color: #125c98; }
+        .icon-btn.edit:hover { color: #1f6fb2; background: #eaf3fb; }
+        .icon-btn.delete:hover { color: var(--danger-red); background: #fff0ee; }
+        .icon-btn.favorite { color: #b08224; }
+        .empty-state { grid-column: 1 / -1; display: flex; min-height: 300px; flex-direction: column; align-items: center; justify-content: center; padding: 32px 18px; text-align: center; }
+        .empty-state-icon { display: grid; place-items: center; width: 66px; height: 66px; margin-bottom: 16px; border-radius: 22px; color: #1f6fb2; background: #eaf3fb; font-size: 1.45rem; }
+        .empty-state h3 { margin-bottom: 7px; color: #102a43; font-size: 1.08rem; }
+        .empty-state p { max-width: 360px; margin-bottom: 18px; color: #667085; font-size: .88rem; line-height: 1.55; }
+        .modal { background: rgba(16, 42, 67, .46); backdrop-filter: blur(4px); }
+        .modal-content { padding: 26px; border: 1px solid #d8e2ee; border-top: 4px solid #1f6fb2; border-radius: 17px; box-shadow: 0 24px 70px rgba(16,42,67,.22); }
+        #note-modal .modal-content { width: min(82vw, 850px); gap: 13px; }
+        .modal-content h3 { color: #102a43; font-size: 1.2rem; }
+        .modal-content input, .modal-content textarea { padding: 11px 13px; border-color: #d8e2ee; border-radius: 9px; background: #ffffff; }
+        .modal-content input:focus, .modal-content textarea:focus { border-color: #6aa6d8; box-shadow: 0 0 0 3px rgba(31,111,178,.1); }
+        #note-title-input { font-size: 1.08rem; font-weight: 600; }
+        .modal-content textarea { min-height: 180px; padding: 14px; border-radius: 11px; line-height: 1.65; }
+        .note-editor-options { padding: 2px 1px; }
+        .favorite-toggle { color: #56675e; }
+        .attachment-toolbar { padding: 10px 12px; border: 1px dashed #d8e2ee; border-radius: 10px; background: #f3f8ff; }
+        .attachment-toolbar .btn { color: #125c98; background: #eaf3fb; }
+        .attachment-preview img { border-radius: 9px; }
+        .modal-actions { gap: 9px; padding-top: 4px; }
+        .modal-actions .btn { min-width: 100px; }
+        .btn-danger { background: #c44d45; }
+        .btn-danger:hover { background: #ab3f38; }
+        .note-view-body { padding: 17px; border-color: #d8e2ee; border-radius: 11px; color: #475467; line-height: 1.75; }
+        .note-view-images img { border-radius: 10px; }
+        @media (max-width: 900px) {
+            body { padding: 16px; }
+            .notes-header { align-items: flex-start; flex-direction: column; }
+            .header-actions { width: 100%; justify-content: space-between; }
+            .notes-toolbar { flex-wrap: wrap; }
+            .search-bar { flex-basis: 100%; }
+        }
+        @media (max-width: 700px) {
+            body { padding: 10px; }
+            .notes-container { gap: 11px; }
+            .notes-header { padding: 15px; border-radius: 13px; }
+            .notes-brand p { max-width: 260px; line-height: 1.35; }
+            .header-actions { flex-wrap: wrap; gap: 8px; }
+            .header-tools { order: 2; }
+            .header-actions .sync-status { order: 1; }
+            .header-actions #btn-new { order: 0; margin-left: auto; }
+            .header-tools .btn { min-height: 36px; }
+            .notes-toolbar { gap: 9px; padding: 10px; }
+            .filter-tabs { width: 100%; justify-content: space-between; }
+            .filter-tab { flex: 1; justify-content: center; padding: 7px 6px; font-size: .74rem; }
+            .toolbar-selects { width: 100%; }
+            .toolbar-selects select { flex: 1; min-width: 0; }
+            .notes-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 10px; }
+            .note-card { min-height: 205px; padding: 14px; }
+            .modal { align-items: center; padding: 10px; }
+            #note-modal .modal-content { width: 100%; max-height: 94dvh; padding: 18px; }
+            .modal-content textarea { min-height: 150px; }
+            .modal-actions .btn { min-height: 42px; }
+        }
+        @media (max-width: 480px) {
+            .sync-status span { display: inline; }
+            .sync-status { font-size: .68rem; padding: 6px 8px; }
+            .notes-brand h2 { font-size: 1.02rem; }
+            .notes-brand p { font-size: .72rem; }
+            .header-actions #btn-new { min-height: 38px; }
+            .filter-tab { gap: 5px; }
+        }
+        body:has(.notes-container) { background: #eef4fb !important; color: #344054 !important; }
+        body .notes-container .notes-header { background: linear-gradient(120deg, #0b1f33 0%, #102a43 58%, #163553 100%) !important; border-radius: 16px !important; }
+        body .notes-container .notes-brand h2 { color: #ffffff !important; }
+        body .notes-container .note-card { border: 1px solid #d8e2ee !important; border-left: 3px solid #1f6fb2 !important; }
+        body .notes-container .note-card:hover { box-shadow: 0 12px 24px rgba(16,42,67,.1) !important; }
+        body .notes-container .btn-primary { background: #1f6fb2 !important; border-color: #1f6fb2 !important; color: #ffffff !important; }
+        body .notes-container .btn-primary:hover { background: #195b91 !important; border-color: #195b91 !important; color: #ffffff !important; }
+        body .notes-container .btn-secondary { background: #eaf3fb !important; border-color: #d6e6d9 !important; color: #125c98 !important; }
+        body .notes-container .btn-secondary:hover { background: #d9efff !important; border-color: #c9e1cf !important; }
+
+        /* Warm, compact layout for the Android app and small screens. */
+        :root {
+            --primary-blue: #28241f;
+            --accent-sky: #716b60;
+            --accent-sky-light: #ece7de;
+            --bright-sky: #f45b3e;
+            --danger-red: #db5842;
+            --bg-color: #fbf8f3;
+            --text-color: #292723;
+            --muted: #817a70;
+            --line: #e8e1d7;
+            --surface: #fffdf9;
+            --shadow-card: 0 2px 9px rgba(53, 43, 30, .055);
+        }
+
+        html { background: #fbf8f3; }
+        body:has(.notes-container) {
+            background: #fbf8f3 !important;
+            color: #292723 !important;
+        }
+        body {
+            padding: 24px;
+            background: #fbf8f3 !important;
+            color: #292723 !important;
+            font-family: Inter, "Segoe UI", sans-serif;
+        }
+        .notes-container { max-width: 1120px; gap: 18px; }
+        .notes-header {
+            position: relative;
+            flex-wrap: wrap;
+            gap: 14px;
+            padding: 14px 0 4px;
+            color: #292723;
+            background: transparent !important;
+            border-radius: 0 !important;
+            box-shadow: none;
+        }
+        body:has(.notes-container) .notes-container .notes-header {
+            color: #292723 !important;
+            background: transparent !important;
+        }
+        .notes-brand { min-width: 0; gap: 0; }
+        .brand-icon { display: none; }
+        .notes-brand h2 {
+            color: #292723 !important;
+            font-size: clamp(1.55rem, 4vw, 2rem);
+            font-weight: 750;
+            letter-spacing: -.055em;
+        }
+        body:has(.notes-container) .notes-container .notes-brand h2 { color: #292723 !important; }
+        .notes-brand h2::after { color: #f45b3e; content: "."; }
+        .notes-brand p { margin-top: 5px; color: #817a70; font-size: .76rem; }
+        .header-actions { align-items: center; justify-content: flex-end; gap: 8px; }
+        .header-tools {
+            gap: 2px;
+            padding: 2px;
+            border: 1px solid #e8e1d7;
+            border-radius: 999px;
+            background: #fffdf9;
+        }
+        .header-divider { background: #e8e1d7; }
+        .btn { min-height: 40px; border-radius: 999px; }
+        .btn-primary, body .notes-container .btn-primary {
+            color: #fff !important;
+            background: #f45b3e !important;
+            border-color: #f45b3e !important;
+            box-shadow: 0 5px 12px rgba(244, 91, 62, .2);
+        }
+        .btn-primary:hover, body .notes-container .btn-primary:hover { background: #e84d32 !important; }
+        .btn-tool { color: #514c44; }
+        .btn-tool:hover { color: #292723; background: #f3eee6; }
+        .sync-status { color: #716b60; background: #f1ece4; }
+        .sync-status.ok { color: #3d6848; background: #e5f0e4; }
+        .sync-status.error { color: #a63d30; background: #fae8e3; }
+        .sync-status.syncing { color: #8b641d; background: #f9efd6; }
+        .notes-toolbar {
+            display: grid;
+            grid-template-columns: minmax(180px, 1fr) auto;
+            gap: 12px 16px;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+        }
+        .search-bar { min-width: 0; }
+        .search-bar i { left: 15px; color: #817a70; }
+        .search-bar input {
+            min-height: 44px;
+            border: 1px solid #e8e1d7;
+            border-radius: 999px;
+            background: #fffdf9;
+            color: #292723;
+        }
+        .search-bar input:focus { border-color: #c6bdae; box-shadow: 0 0 0 3px rgba(121, 104, 79, .09); }
+        .search-clear { right: 12px; }
+        .filter-tabs { gap: 4px; padding: 0; background: transparent; }
+        .filter-tab {
+            min-height: 40px;
+            padding: 8px 13px;
+            border: 1px solid #e8e1d7;
+            border-radius: 999px;
+            color: #514c44;
+            background: #fffdf9;
+            font-size: .78rem;
+        }
+        .filter-tab:hover { color: #292723; background: #f6f1e9; }
+        .filter-tab.active { color: #fff; background: #292723; box-shadow: none; }
+        .toolbar-selects { min-width: 0; gap: 8px; }
+        .notes-toolbar select, .note-field {
+            min-height: 40px;
+            border-color: #e8e1d7;
+            border-radius: 999px;
+            color: #514c44;
+            background-color: #fffdf9;
+        }
+        .notes-grid {
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            align-content: start;
+            gap: 16px;
+            padding: 0 0 20px;
+        }
+        .note-card, body .notes-container .note-card {
+            min-height: 185px;
+            padding: 16px;
+            border: 1px solid transparent !important;
+            border-radius: 19px;
+            background: #f9e27d;
+            box-shadow: none;
+        }
+        body .notes-container .note-card:nth-child(4n + 2) { background: #ded7f6; }
+        body .notes-container .note-card:nth-child(4n + 3) { background: #f5c5b2; }
+        body .notes-container .note-card:nth-child(4n + 4) { background: #cce6d0; }
+        .note-card:hover, body .notes-container .note-card:hover { transform: none; box-shadow: 0 8px 18px rgba(53,43,30,.09) !important; }
+        .note-card::before { display: none; }
+        .note-card.is-favorite { border-top: 0; }
+        .note-card.is-favorite::before { display: none; }
+        .note-card.is-trash { opacity: .78; }
+        .note-title { margin: 7px 0; color: #292723; font-size: 1rem; font-weight: 700; }
+        .note-meta { margin: 0 0 8px; }
+        .note-tag {
+            padding: 4px 9px;
+            border: 1px solid rgba(41, 39, 35, .12);
+            color: #39362f;
+            background: rgba(255,255,255,.24);
+            font-size: .6rem;
+            font-weight: 700;
+            letter-spacing: .045em;
+            text-transform: uppercase;
+        }
+        .note-body { margin-bottom: 9px; color: #514c44; font-size: .78rem; line-height: 1.5; }
+        .note-footer { padding-top: 8px; border-top: 0; }
+        .note-date { color: #625c51; font-size: .64rem; }
+        .note-actions { gap: 1px; }
+        .icon-btn { width: 28px; height: 28px; border-radius: 50%; color: #514c44; font-size: .75rem; }
+        .icon-btn:hover { background: rgba(255,255,255,.38); }
+        .icon-btn.favorite { color: #292723; }
+        .empty-state { color: #292723; }
+        .empty-state-icon { color: #d84e35; background: #fce7dc; }
+        .empty-state h3 { color: #292723; }
+        .modal { background: rgba(41, 39, 35, .42); }
+        .modal-content { border: 1px solid #e8e1d7; border-top: 0; border-radius: 22px; }
+        .modal-content h3 { color: #292723; }
+        .modal-content input, .modal-content textarea { border-color: #e8e1d7; border-radius: 12px; }
+        .note-view-body { border-color: #e8e1d7; }
+
+        @media (max-width: 700px) {
+            body {
+                height: 100vh;
+                height: 100dvh;
+                padding: max(14px, env(safe-area-inset-top)) 16px 0;
+                overflow: hidden;
+            }
+            .notes-container { gap: 13px; height: 100%; }
+            .notes-header { flex: 0 0 auto; padding: 7px 0 0; }
+            .notes-brand p { display: none; }
+            .header-actions { justify-content: flex-end; gap: 6px; }
+            .search-toggle { width: 42px; min-width: 42px; min-height: 42px; }
+            .header-actions #btn-new {
+                position: fixed;
+                z-index: 20;
+                right: 20px;
+                bottom: calc(78px + env(safe-area-inset-bottom));
+                order: 3;
+                display: grid;
+                width: 52px;
+                min-width: 52px;
+                height: 52px;
+                min-height: 52px;
+                place-items: center;
+                padding: 0;
+                border-radius: 17px;
+                font-size: 0;
+            }
+            .header-actions #btn-new i { font-size: 1.15rem; }
+            .notes-toolbar {
+                flex: 0 0 auto;
+                grid-template-columns: 1fr;
+                gap: 9px;
+            }
+            .notes-toolbar .filter-tabs { grid-row: 1; }
+            .notes-toolbar .search-bar { grid-row: 2; }
+            .filter-tabs {
+                position: fixed;
+                z-index: 19;
+                right: 0;
+                bottom: 0;
+                left: 0;
+                display: flex;
+                justify-content: space-around;
+                gap: 0;
+                min-height: calc(62px + env(safe-area-inset-bottom));
+                padding: 8px 10px max(8px, env(safe-area-inset-bottom));
+                border-top: 1px solid #eee8df;
+                background: rgba(255, 253, 249, .97);
+                backdrop-filter: blur(12px);
+            }
+            .filter-tab {
+                display: flex;
+                flex: 1;
+                flex-direction: column;
+                justify-content: center;
+                gap: 4px;
+                min-height: 44px;
+                padding: 5px 4px;
+                border: 0;
+                border-radius: 10px;
+                color: #969084;
+                background: transparent;
+                font-size: .62rem;
+            }
+            .filter-tab i { font-size: 1rem; }
+            .filter-tab:hover { background: transparent; }
+            .filter-tab.active { color: #292723; background: transparent; box-shadow: none; }
+            .filter-tab-account { display: flex; }
+            .notes-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-auto-rows: minmax(184px, auto);
+                align-content: start;
+                gap: 14px;
+                padding: 0 0 calc(80px + env(safe-area-inset-bottom));
+            }
+            .note-card, body .notes-container .note-card {
+                min-width: 0;
+                min-height: 184px;
+                padding: 12px;
+                border-radius: 17px;
+            }
+            .note-card:nth-child(3n + 1) { grid-column: 1 / -1; }
+            .note-title { font-size: .92rem; }
+            .note-body { font-size: .72rem; -webkit-line-clamp: 3; }
+            .note-images { max-height: 44px; }
+            .note-images a, .note-images img { width: 42px; height: 42px; }
+            .note-footer { align-items: stretch; flex-direction: column; gap: 4px; }
+            .note-date { width: 100%; }
+            .note-actions { width: 100%; justify-content: space-between; gap: 0; }
+            .icon-btn { flex: 0 0 26px; width: 26px; height: 28px; font-size: .7rem; }
+            .note-card:hover, body .notes-container .note-card:hover { transform: none; }
+            .modal { align-items: center; padding: 12px; }
+            .modal-content { width: 100%; max-height: 92dvh; padding: 20px; }
+            #note-modal .modal-content { width: 100%; }
+            .note-view-content { width: 100%; }
+        }
+
+        @media (max-width: 360px) {
+            body { padding-right: 12px; padding-left: 12px; }
+            .notes-brand h2 { font-size: 1.45rem; }
+            .header-tools .btn { min-width: 31px; padding-right: 6px; padding-left: 6px; }
+            .note-card, body .notes-container .note-card { padding: 10px; }
+            .notes-grid { gap: 12px; }
+        }
+        .header-tools, .header-actions > .sync-status { display: none !important; }
+        .header-actions { margin-left: auto; }
+        .search-toggle {
+            display: inline-grid;
+            place-items: center;
+            width: 42px;
+            min-width: 42px;
+            height: 42px;
+            padding: 0;
+            border: 1px solid #e8e1d7;
+            border-radius: 50%;
+            color: #39362f;
+            background: #fffdf9;
+            box-shadow: 0 2px 8px rgba(53,43,30,.05);
+        }
+        .search-toggle:hover, .search-toggle[aria-expanded="true"] { background: #f3eee6; }
+        .notes-toolbar .search-bar { display: none; }
+        .notes-container.search-open .notes-toolbar .search-bar { display: block; }
+        .notes-toolbar .toolbar-selects { display: none !important; }
+        .notes-container.search-open .notes-toolbar {
+            grid-template-columns: minmax(0, 1fr);
+        }
+        .search-toggle.has-query { position: relative; }
+        .search-toggle.has-query::after {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 7px;
+            height: 7px;
+            border: 1px solid #fffdf9;
+            border-radius: 50%;
+            background: #f45b3e;
+            content: "";
+        }
+        @media (max-width: 700px) {
+            .notes-header {
+                align-items: center;
+                flex-direction: row;
+                justify-content: space-between;
+            }
+            .header-actions { width: auto; flex-wrap: nowrap; }
+        }
+
+        html.dark-mode {
+            --bg-color: #17191c;
+            --text-color: #e7e3dc;
+            --muted: #aaa49a;
+            --line: #393b3e;
+            --surface: #242629;
+            --shadow-card: 0 5px 18px rgba(0,0,0,.2);
+        }
+        html.dark-mode body { background: var(--bg-color); color: var(--text-color); }
+        html.dark-mode,
+        html.dark-mode body,
+        html.dark-mode body:has(.notes-container) { background: #17191c !important; color: #e7e3dc !important; }
+        html.dark-mode body:has(.notes-container) .notes-container .notes-header { color: #f0ece5 !important; }
+        html.dark-mode .notes-brand h2,
+        html.dark-mode body .notes-container .notes-brand h2,
+        html.dark-mode body:has(.notes-container) .notes-container .notes-brand h2,
+        html.dark-mode .note-title,
+        html.dark-mode .empty-state h3,
+        html.dark-mode .empty-state { color: #f0ece5 !important; }
+        html.dark-mode .notes-grid { scrollbar-color: #55585c transparent; }
+        html.dark-mode .note-card,
+        html.dark-mode body .notes-container .note-card { border-color: #3a3d40 !important; background: #292c30; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+        html.dark-mode body .notes-container .note-card:nth-child(4n + 2) { background: #302d3b; }
+        html.dark-mode body .notes-container .note-card:nth-child(4n + 3) { background: #3a2d2b; }
+        html.dark-mode body .notes-container .note-card:nth-child(4n + 4) { background: #29362f; }
+        html.dark-mode .note-body,
+        html.dark-mode .note-date,
+        html.dark-mode .icon-btn,
+        html.dark-mode .note-tag { color: #d1ccc3; }
+        html.dark-mode .note-tag { border-color: #51545a; background: rgba(255,255,255,.07); }
+        html.dark-mode .note-card:hover,
+        html.dark-mode body .notes-container .note-card:hover { box-shadow: 0 8px 20px rgba(0,0,0,.32) !important; }
+        html.dark-mode .search-bar input,
+        html.dark-mode .search-toggle,
+        html.dark-mode .filter-tab,
+        html.dark-mode .settings-account,
+        html.dark-mode .settings-theme-row { border-color: #3b3e42; color: #e7e3dc; background: #25272a; }
+        html.dark-mode .filter-tab.active { color: #fff; background: #45484c; }
+        html.dark-mode .filter-tab:hover,
+        html.dark-mode .search-toggle:hover,
+        html.dark-mode .search-toggle[aria-expanded="true"] { background: #34373b; }
+        html.dark-mode .filter-tabs { background: transparent; }
+        html.dark-mode .notes-toolbar select,
+        html.dark-mode .note-field,
+        html.dark-mode .modal-content input,
+        html.dark-mode .modal-content textarea { border-color: #44474b; color: #e7e3dc; background-color: #242629; }
+        html.dark-mode .modal-content input::placeholder,
+        html.dark-mode .modal-content textarea::placeholder,
+        html.dark-mode .search-bar input::placeholder { color: #aaa49a; }
+        html.dark-mode .modal-content { border-color: #393b3e; background: #202225; }
+        html.dark-mode .modal-content h3,
+        html.dark-mode .settings-theme-copy strong,
+        html.dark-mode .settings-account strong { color: #f0ece5; }
+        html.dark-mode .settings-account span,
+        html.dark-mode .settings-hint,
+        html.dark-mode .settings-theme-copy span { color: #b6b0a6; }
+        html.dark-mode .note-view-body { border-color: #44474b; color: #e7e3dc; }
+        html.dark-mode .filter-tabs {
+            border-top-color: #34373a;
+            background: rgba(29,31,34,.97);
+        }
+        html.dark-mode .filter-tab { color: #aaa49a; }
+        html.dark-mode .filter-tab.active { color: #f0ece5; }
+        html.dark-mode .empty-state-icon { color: #ff947e; background: #3a2d2b; }
+    </style>
+    <script>
+        try {
+            if (localStorage.getItem('quick_notes_dark_mode') === 'true') {
+                document.documentElement.classList.add('dark-mode');
+            }
+        } catch (error) {
+            console.error('Could not restore theme preference:', error);
+        }
+</script>
+</head>
+<body>
+    <div class="notes-container">
+        <!-- Cabecera de la App -->
+        <header class="notes-header">
+            <div class="notes-brand">
+                <span class="brand-icon"><i class="fa-solid fa-note-sticky" aria-hidden="true"></i></span>
+                <div><h2>Quick Notes</h2><p>Capture your ideas and find them whenever you need them</p></div>
+            </div>
+            <div class="header-actions">
+                <button id="btn-search-toggle" class="btn btn-tool search-toggle" type="button" title="Search notes" aria-label="Search notes" aria-expanded="false"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></button>
+                <span id="sync-status" class="sync-status" role="status" aria-live="polite" title="Local on this device"><i class="fa-solid fa-cloud"></i><span>Local on this device</span></span>
+                <div class="header-tools" aria-label="Tools">
+                    <button id="btn-auth" class="btn btn-tool" title="Sign in" aria-label="Sign in"><i class="fa-solid fa-right-to-bracket"></i></button>
+                    <button id="btn-sync" class="btn btn-tool" type="button" title="Sync now" aria-label="Sync notes"><i class="fa-solid fa-rotate"></i></button>
+                    <span class="header-divider" aria-hidden="true"></span>
+                    <button id="btn-export" class="btn btn-tool" title="Export notes" aria-label="Export notes"><i class="fa-solid fa-download"></i></button>
+                    <label for="import-file" class="btn btn-tool" title="Import notes" aria-label="Import notes">
+                        <i class="fa-solid fa-upload"></i>
+                        <input type="file" id="import-file" accept=".json" style="display: none;">
+                    </label>
+                </div>
+                <button id="btn-new" class="btn btn-primary" title="Create a note"><i class="fa-solid fa-plus"></i> New note</button>
+            </div>
+        </header>
+
+        <!-- Floating form / modal to create or edit a note -->
+        <div id="note-modal" class="modal hidden">
+            <div class="modal-content">
+                <h3 id="modal-title">Create note</h3>
+                <input type="text" id="note-title-input" placeholder="Note title" autocomplete="off">
+                <input type="text" id="note-tags-input" class="note-field" placeholder="Tags, separated by commas" autocomplete="off">
+                <div class="note-editor-options">
+                    <label class="favorite-toggle"><input type="checkbox" id="note-favorite-input"> <i class="fa-solid fa-star"></i> Favorite</label>
+                    <span id="draft-status" class="draft-status" role="status" aria-live="polite"></span>
+                </div>
+                <textarea id="note-body-input" placeholder="Write your note here..."></textarea>
+                <div class="attachment-toolbar">
+                    <label for="note-image-input" class="btn btn-accent" style="cursor: pointer;"><i class="fa-solid fa-paperclip"></i> Attach images</label>
+                    <input type="file" id="note-image-input" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
+                    <span id="attachment-count" class="auth-hint">No images attached</span>
+                </div>
+                <div id="attachment-previews" class="attachment-previews"></div>
+                <div class="modal-actions">
+                    <button id="btn-save" class="btn btn-primary">Save</button>
+                    <button id="btn-cancel" class="btn btn-danger">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="note-view-modal" class="modal hidden" aria-hidden="true">
+            <div class="modal-content note-view-content" role="dialog" aria-modal="true" aria-labelledby="note-view-title">
+                <div class="note-view-header">
+                    <div>
+                        <h3 id="note-view-title"></h3>
+                        <p id="note-view-date" class="note-view-date"></p>
+                    </div>
+                    <button id="btn-close-note-view" class="icon-btn" type="button" title="Close note" aria-label="Close note"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="note-view-body" class="note-view-body"></div>
+                <div id="note-view-images" class="note-view-images"></div>
+            </div>
+        </div>
+
+        <!-- Modal de inicio de sesión (Supabase) -->
+        <div id="auth-modal" class="modal hidden">
+            <div class="modal-content auth">
+                <h3>Sign in</h3>
+                <p class="auth-hint">Sign in to sync your notes across devices.</p>
+                <input type="email" id="auth-email" placeholder="Email" autocomplete="username">
+                <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password">
+                <div id="auth-error" class="auth-error"></div>
+                <div class="modal-actions">
+                    <button id="btn-login" class="btn btn-primary">Sign in</button>
+                    <button id="btn-auth-cancel" class="btn btn-danger">Not now</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings-modal" class="modal hidden" aria-hidden="true">
+            <div class="modal-content settings-content" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+                <div class="settings-header">
+                    <h3 id="settings-title">Settings</h3>
+                    <button id="btn-settings-close" class="icon-btn" type="button" title="Close settings" aria-label="Close settings"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+                </div>
+                <div class="settings-account">
+                    <strong>Account and sync</strong>
+                    <span id="settings-account-status"></span>
+                </div>
+                <label class="settings-theme-row" for="dark-mode-toggle">
+                    <span class="settings-theme-copy">
+                        <strong>Dark mode</strong>
+                        <span>Use a darker color theme.</span>
+                    </span>
+                    <input id="dark-mode-toggle" class="theme-toggle" type="checkbox" role="switch" aria-label="Enable dark mode">
+                </label>
+                <p class="settings-hint">Your notes remain saved on this device. Sign in to sync them across devices.</p>
+                <p id="settings-error" class="settings-error" role="alert"></p>
+                <div id="settings-signout-confirm" class="settings-confirm" hidden>
+                    <p class="settings-hint">Sign out? Your notes will remain on this device but will no longer sync.</p>
+                    <div class="modal-actions">
+                        <button id="btn-settings-signout-confirm" class="btn btn-danger" type="button">Sign out</button>
+                        <button id="btn-settings-signout-cancel" class="btn btn-secondary" type="button">Cancel</button>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="btn-settings-signin" class="btn btn-primary" type="button">Sign in</button>
+                    <button id="btn-settings-signout" class="btn btn-danger" type="button" hidden>Sign out</button>
+                    <button id="btn-settings-close-action" class="btn btn-secondary" type="button">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="import-modal" class="modal hidden" aria-hidden="true">
+            <div class="modal-content import-options" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
+                <h3 id="import-modal-title">Import notes</h3>
+                <p id="import-modal-summary"></p>
+                <div class="modal-actions import-choice">
+                    <button id="btn-import-merge" class="btn btn-primary" type="button">Merge notes</button>
+                    <button id="btn-import-replace" class="btn btn-danger" type="button">Replace notes</button>
+                    <button id="btn-import-cancel" class="btn btn-accent" type="button">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="app-toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+        <div class="notes-toolbar">
+            <div class="filter-tabs" role="group" aria-label="Filter notes">
+                <button class="filter-tab active" type="button" data-note-filter="all" aria-pressed="true"><i class="fa-regular fa-note-sticky" aria-hidden="true"></i> All notes</button>
+                <button class="filter-tab" type="button" data-note-filter="favorites" aria-pressed="false"><i class="fa-regular fa-star" aria-hidden="true"></i> Favorites</button>
+                <button class="filter-tab" type="button" data-note-filter="trash" aria-pressed="false"><i class="fa-regular fa-trash-can" aria-hidden="true"></i> Trash</button>
+                <button id="btn-account" class="filter-tab filter-tab-account" type="button" aria-label="Account settings"><i class="fa-solid fa-gear" aria-hidden="true"></i> Settings</button>
+            </div>
+            <div class="search-bar">
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+                <input type="search" id="search-input" placeholder="Search your notes..." aria-label="Search notes">
+                <button id="btn-clear-search" class="search-clear" type="button" title="Clear search" aria-label="Clear search"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <select id="note-filter" aria-label="Filter notes" class="filter-native" tabindex="-1" aria-hidden="true">
+                <option value="all">All notes</option>
+                <option value="favorites">Favorites</option>
+                <option value="trash">Trash</option>
+            </select>
+            <div class="toolbar-selects">
+                <select id="tag-filter" aria-label="Filter by tag">
+                    <option value="">All tags</option>
+                </select>
+                <select id="note-sort" aria-label="Sort notes">
+                    <option value="created">Newest first</option>
+                    <option value="updated">Recently edited</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Listado de Notas -->
+        <div id="notes-grid" class="notes-grid">
+            <!-- Las notas se insertarán dinámicamente aquí -->
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // ---- Configuración de Supabase ----
+            const SUPABASE_URL = 'https://whujmjnnfrcszdlqbyev.supabase.co';
+            const SUPABASE_KEY = 'sb_publishable_oeABAK0OyPsapwQQ3qGFAQ_xIj6_c6P';
+            const IMAGE_BUCKET = 'quick-note-images';
+            const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+            const sb = (window.supabase && window.supabase.createClient)
+                ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+                : null;
+
+            let notes = loadNotes(); // incluye notas borradas (marcadas con deleted:true) para sincronizar borrados
+            let currentEditId = null;
+            let viewedNoteId = null;
+            let session = null;
+            let syncing = false;
+            let syncPending = false;
+            let attachedImagePaths = [];
+            let selectedImages = [];
+            let importPendingNotes = null;
+            let editorBaseline = '';
+            let draftTimer = null;
+
+            // Elementos del DOM
+            const notesGrid = document.getElementById('notes-grid');
+            const searchInput = document.getElementById('search-input');
+            const btnSearchToggle = document.getElementById('btn-search-toggle');
+            const notesContainer = document.querySelector('.notes-container');
+            const noteFilter = document.getElementById('note-filter');
+            const tagFilter = document.getElementById('tag-filter');
+            const noteSort = document.getElementById('note-sort');
+            const btnClearSearch = document.getElementById('btn-clear-search');
+            const noteViewModal = document.getElementById('note-view-modal');
+            const noteViewTitle = document.getElementById('note-view-title');
+            const noteViewDate = document.getElementById('note-view-date');
+            const noteViewBody = document.getElementById('note-view-body');
+            const noteViewImages = document.getElementById('note-view-images');
+            const btnCloseNoteView = document.getElementById('btn-close-note-view');
+            const btnNew = document.getElementById('btn-new');
+            const noteModal = document.getElementById('note-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const noteTitleInput = document.getElementById('note-title-input');
+            const noteTagsInput = document.getElementById('note-tags-input');
+            const noteFavoriteInput = document.getElementById('note-favorite-input');
+            const noteBodyInput = document.getElementById('note-body-input');
+            const draftStatus = document.getElementById('draft-status');
+            const noteImageInput = document.getElementById('note-image-input');
+            const attachmentPreviews = document.getElementById('attachment-previews');
+            const attachmentCount = document.getElementById('attachment-count');
+            const btnSave = document.getElementById('btn-save');
+            const btnCancel = document.getElementById('btn-cancel');
+            const btnExport = document.getElementById('btn-export');
+            const importFile = document.getElementById('import-file');
+            const btnAuth = document.getElementById('btn-auth');
+            const btnAccount = document.getElementById('btn-account');
+            const settingsModal = document.getElementById('settings-modal');
+            const settingsAccountStatus = document.getElementById('settings-account-status');
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            const settingsError = document.getElementById('settings-error');
+            const settingsSignoutConfirm = document.getElementById('settings-signout-confirm');
+            const btnSettingsClose = document.getElementById('btn-settings-close');
+            const btnSettingsCloseAction = document.getElementById('btn-settings-close-action');
+            const btnSettingsSignin = document.getElementById('btn-settings-signin');
+            const btnSettingsSignout = document.getElementById('btn-settings-signout');
+            const btnSettingsSignoutConfirm = document.getElementById('btn-settings-signout-confirm');
+            const btnSettingsSignoutCancel = document.getElementById('btn-settings-signout-cancel');
+            const appToast = document.getElementById('app-toast');
+            let settingsOpenedAuth = false;
+            let toastTimer;
+            const btnSync = document.getElementById('btn-sync');
+            const syncStatus = document.getElementById('sync-status');
+            const authModal = document.getElementById('auth-modal');
+            const authEmail = document.getElementById('auth-email');
+            const authPassword = document.getElementById('auth-password');
+            const authError = document.getElementById('auth-error');
+            const btnLogin = document.getElementById('btn-login');
+            const btnAuthCancel = document.getElementById('btn-auth-cancel');
+            const importModal = document.getElementById('import-modal');
+            const importModalSummary = document.getElementById('import-modal-summary');
+            const btnImportMerge = document.getElementById('btn-import-merge');
+            const btnImportReplace = document.getElementById('btn-import-replace');
+            const btnImportCancel = document.getElementById('btn-import-cancel');
+
+            // Renderizar notas al cargar
+            refresh();
+            initAuth();
+
+            // Abrir Modal para Nueva Nota
+            btnNew.addEventListener('click', () => {
+                currentEditId = null;
+                modalTitle.textContent = 'Create new note';
+                const draft = loadDraft();
+                noteTitleInput.value = draft?.title || '';
+                noteBodyInput.value = draft?.body || '';
+                noteTagsInput.value = (draft?.tags || []).join(', ');
+                noteFavoriteInput.checked = !!draft?.favorite;
+                draftStatus.textContent = draft ? 'Draft restored' : '';
+                attachedImagePaths = [];
+                clearSelectedImages();
+                renderAttachmentPreviews();
+                openEditor();
+            });
+
+            [noteTitleInput, noteTagsInput, noteFavoriteInput, noteBodyInput].forEach(input => {
+                input.addEventListener('input', scheduleDraftSave);
+                input.addEventListener('change', scheduleDraftSave);
+            });
+
+            noteImageInput.addEventListener('change', () => {
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                Array.from(noteImageInput.files || []).forEach(file => {
+                    if (!allowedTypes.includes(file.type)) {
+                        alert(`${file.name} is not a supported image type.`);
+                    } else if (file.size > MAX_IMAGE_SIZE) {
+                        alert(`${file.name} is larger than 10 MB.`);
+                    } else {
+                        selectedImages.push({ file, url: URL.createObjectURL(file) });
+                    }
+                });
+                noteImageInput.value = '';
+                renderAttachmentPreviews();
+            });
+
+            // Cerrar Modal
+            btnCancel.addEventListener('click', closeEditor);
+            noteModal.addEventListener('click', event => {
+                if (event.target === noteModal) closeEditor();
+            });
+
+            // Save Nota (Crear o Actualizar)
+            btnSave.addEventListener('click', async () => {
+                const title = noteTitleInput.value.trim();
+                const body = noteBodyInput.value.trim();
+                const tags = parseTags(noteTagsInput.value);
+                const favorite = noteFavoriteInput.checked;
+
+                if (!title && !body && tags.length === 0 && !favorite && attachedImagePaths.length === 0 && selectedImages.length === 0) {
+                    alert('The note cannot be empty.');
+                    return;
+                }
+
+                if (selectedImages.length && (!sb || !session)) {
+                    alert('Sign in to sync image attachments. Text notes can still be saved locally.');
+                    return;
+                }
+
+                btnSave.disabled = true;
+                const noteId = currentEditId ?? String(Date.now());
+                const now = Date.now();
+                try {
+                    const uploadedPaths = await uploadSelectedImages(noteId);
+                    const imagePaths = [...attachedImagePaths, ...uploadedPaths];
+                    if (currentEditId !== null) {
+                        notes = notes.map(note =>
+                            note.id === currentEditId
+                                ? { ...note, title: title || 'Untitled', body, tags, favorite, images: imagePaths, updated_at: now }
+                                : note
+                        );
+                    } else {
+                        notes.unshift({
+                            id: noteId,
+                            title: title || 'Untitled',
+                            body,
+                            tags,
+                            favorite,
+                            images: imagePaths,
+                            date: new Date().toLocaleDateString('en-US'),
+                            created_at: now,
+                            updated_at: now,
+                            deleted: false
+                        });
+                    }
+
+                    clearDraft();
+                    saveAndRefresh();
+                    noteModal.classList.add('hidden');
+                    clearEditorState();
+                    attachedImagePaths = [];
+                    clearSelectedImages();
+                } catch (error) {
+                    console.error('Could not save note:', error);
+                    alert(`Could not save note: ${error.message || 'Please check storage and try again.'}`);
+                } finally {
+                    btnSave.disabled = false;
+                }
+            });
+
+            function editorValues() {
+                return JSON.stringify({
+                    title: noteTitleInput.value,
+                    body: noteBodyInput.value,
+                    tags: parseTags(noteTagsInput.value),
+                    favorite: noteFavoriteInput.checked,
+                    images: attachedImagePaths,
+                    selectedImages: selectedImages.map(({ file }) => `${file.name}:${file.size}:${file.lastModified}`)
+                });
+            }
+
+            function openEditor() {
+                editorBaseline = editorValues();
+                noteModal.classList.remove('hidden');
+                noteTitleInput.focus();
+            }
+
+            function closeEditor() {
+                if (editorValues() !== editorBaseline && !confirm('Close without saving? Your text draft will remain available; image attachment changes will not be saved.')) return;
+                if (editorValues() !== editorBaseline) {
+                    window.clearTimeout(draftTimer);
+                    saveDraftNow();
+                } else {
+                    window.clearTimeout(draftTimer);
+                }
+                noteModal.classList.add('hidden');
+                clearSelectedImages();
+                clearEditorState();
+            }
+
+            function clearEditorState() {
+                editorBaseline = '';
+                draftStatus.textContent = '';
+            }
+
+            function draftStorageKey() {
+                return `quick_notes_draft_${currentEditId === null ? 'new' : currentEditId}`;
+            }
+
+            function loadDraft() {
+                try {
+                    const draft = JSON.parse(localStorage.getItem(draftStorageKey()) || 'null');
+                    return draft && typeof draft === 'object' ? draft : null;
+                } catch (error) {
+                    console.error('Could not load note draft:', error);
+                    return null;
+                }
+            }
+
+            function scheduleDraftSave() {
+                window.clearTimeout(draftTimer);
+                draftStatus.textContent = 'Changes pending...';
+                draftTimer = window.setTimeout(saveDraftNow, 350);
+            }
+
+            function saveDraftNow() {
+                try {
+                    const draft = {
+                        title: noteTitleInput.value,
+                        body: noteBodyInput.value,
+                        tags: parseTags(noteTagsInput.value),
+                        favorite: noteFavoriteInput.checked,
+                        savedAt: Date.now()
+                    };
+                    if (draft.title || draft.body || draft.tags.length || draft.favorite) {
+                        localStorage.setItem(draftStorageKey(), JSON.stringify(draft));
+                        draftStatus.textContent = 'Draft saved on this device';
+                    } else {
+                        clearDraft();
+                        draftStatus.textContent = '';
+                    }
+                } catch (error) {
+                    console.error('Could not save note draft:', error);
+                    draftStatus.textContent = 'Could not save draft';
+                }
+            }
+
+            function clearDraft() {
+                window.clearTimeout(draftTimer);
+                localStorage.removeItem(draftStorageKey());
+            }
+
+            function parseTags(value) {
+                return [...new Set(String(value || '').split(',').map(tag => tag.trim()).filter(Boolean))];
+            }
+
+            function clearSelectedImages() {
+                selectedImages.forEach(image => URL.revokeObjectURL(image.url));
+                selectedImages = [];
+            }
+
+            async function uploadSelectedImages(noteId) {
+                if (!selectedImages.length) return [];
+                const uploadedPaths = [];
+                try {
+                    for (const { file } of selectedImages) {
+                        const extension = ({
+                            'image/jpeg': 'jpg',
+                            'image/png': 'png',
+                            'image/gif': 'gif',
+                            'image/webp': 'webp'
+                        })[file.type];
+                        const path = `${session.user.id}/${noteId}/${crypto.randomUUID()}.${extension}`;
+                        const { error } = await sb.storage.from(IMAGE_BUCKET).upload(path, file, {
+                            contentType: file.type,
+                            upsert: false
+                        });
+                        if (error) throw error;
+                        uploadedPaths.push(path);
+                    }
+                    return uploadedPaths;
+                } catch (error) {
+                    if (uploadedPaths.length) await sb.storage.from(IMAGE_BUCKET).remove(uploadedPaths);
+                    throw error;
+                }
+            }
+
+            async function getImageUrl(path) {
+                if (!sb || !session || !path) return null;
+                const { data, error } = await sb.storage.from(IMAGE_BUCKET).createSignedUrl(path, 3600);
+                if (error) {
+                    console.error('Could not load note image:', error);
+                    return null;
+                }
+                return data.signedUrl;
+            }
+
+            function createImagePreview(src, onRemove) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'attachment-preview';
+                const image = document.createElement('img');
+                image.alt = 'Attached image';
+                if (src) image.src = src;
+                const removeButton = document.createElement('button');
+                removeButton.type = 'button';
+                removeButton.title = 'Remove image';
+                removeButton.setAttribute('aria-label', 'Remove image');
+                removeButton.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                removeButton.addEventListener('click', onRemove);
+                wrapper.append(image, removeButton);
+                return { wrapper, image };
+            }
+
+            function renderAttachmentPreviews() {
+                attachmentPreviews.replaceChildren();
+                attachedImagePaths.forEach((path, index) => {
+                    const preview = createImagePreview('', () => {
+                        attachedImagePaths.splice(index, 1);
+                        renderAttachmentPreviews();
+                    });
+                    attachmentPreviews.appendChild(preview.wrapper);
+                    getImageUrl(path).then(url => {
+                        if (url && preview.wrapper.isConnected) preview.image.src = url;
+                    });
+                });
+                selectedImages.forEach((image, index) => {
+                    const preview = createImagePreview(image.url, () => {
+                        URL.revokeObjectURL(image.url);
+                        selectedImages.splice(index, 1);
+                        renderAttachmentPreviews();
+                    });
+                    attachmentPreviews.appendChild(preview.wrapper);
+                });
+                const count = attachedImagePaths.length + selectedImages.length;
+                attachmentCount.textContent = count ? `${count} image(s) attached` : 'No images attached';
+            }
+
+            // Visible notes (excluding deleted notes) filtered by the current search
+            function visibleNotes() {
+                const query = searchInput.value.trim().toLowerCase();
+                const filter = noteFilter.value;
+                const selectedTag = tagFilter.value;
+                return notes.filter(note => {
+                    const isDeleted = !!note.deleted;
+                    if (filter === 'trash' ? !isDeleted : isDeleted) return false;
+                    if (filter === 'favorites' && !note.favorite) return false;
+                    const tags = Array.isArray(note.tags) ? note.tags : [];
+                    if (selectedTag && !tags.includes(selectedTag)) return false;
+                    const searchable = [note.title, note.body, ...tags].join(' ').toLowerCase();
+                    return !query || searchable.includes(query);
+                }).sort((a, b) => {
+                    if (a.deleted && b.deleted) return (b.updated_at || 0) - (a.updated_at || 0);
+                    if (!!a.deleted !== !!b.deleted) return a.deleted ? 1 : -1;
+                    if (noteSort.value === 'updated') return (b.updated_at || 0) - (a.updated_at || 0);
+                    return createdAt(b) - createdAt(a);
+                });
+            }
+
+            function refresh() {
+                refreshTagFilter();
+                const visible = visibleNotes();
+                btnClearSearch.hidden = !searchInput.value;
+                btnSearchToggle.classList.toggle('has-query', !!searchInput.value.trim());
+                document.querySelectorAll('[data-note-filter]').forEach(button => {
+                    const active = button.dataset.noteFilter === noteFilter.value;
+                    button.classList.toggle('active', active);
+                    button.setAttribute('aria-pressed', String(active));
+                });
+                renderNotes(visible);
+            }
+
+            function refreshTagFilter() {
+                const selected = tagFilter.value;
+                const tags = [...new Set(notes.filter(note => !note.deleted)
+                    .flatMap(note => Array.isArray(note.tags) ? note.tags : []))].sort((a, b) => a.localeCompare(b));
+                tagFilter.replaceChildren(new Option('All tags', ''));
+                tags.forEach(tag => tagFilter.add(new Option(tag, tag)));
+                if (tags.includes(selected)) tagFilter.value = selected;
+            }
+
+            // Render the notes list
+            function renderNotes(notesToRender) {
+                notesGrid.innerHTML = '';
+                if (notesToRender.length === 0) {
+                    const hasActiveNotes = notes.some(note => !note.deleted);
+                    const isSearching = !!searchInput.value.trim() || !!tagFilter.value || noteFilter.value === 'favorites';
+                    const isTrash = noteFilter.value === 'trash';
+                    const empty = document.createElement('section');
+                    empty.className = 'empty-state';
+                    const icon = document.createElement('span');
+                    icon.className = 'empty-state-icon';
+                    const iconElement = document.createElement('i');
+                    iconElement.className = `fa-solid ${isTrash ? 'fa-trash-can' : isSearching ? 'fa-magnifying-glass' : 'fa-note-sticky'}`;
+                    iconElement.setAttribute('aria-hidden', 'true');
+                    icon.appendChild(iconElement);
+                    const heading = document.createElement('h3');
+                    const description = document.createElement('p');
+                    if (isTrash) {
+                        heading.textContent = 'Your trash is empty';
+                        description.textContent = 'Notes you delete will appear here, where you can restore them.';
+                    } else if (isSearching) {
+                        heading.textContent = 'No notes found';
+                        description.textContent = 'Try another search or change the filters to see more results.';
+                    } else if (!hasActiveNotes) {
+                        heading.textContent = 'Start with your first note';
+                        description.textContent = 'Save ideas, reminders, and anything you want to find again.';
+                    } else {
+                        heading.textContent = 'No notes to show';
+                        description.textContent = 'Change the filters or create a new note to get started.';
+                    }
+                    empty.append(icon, heading, description);
+                    if (isSearching) {
+                        const clearButton = document.createElement('button');
+                        clearButton.type = 'button';
+                        clearButton.className = 'btn btn-secondary';
+                        clearButton.innerHTML = '<i class="fa-solid fa-filter-circle-xmark" aria-hidden="true"></i> Clear filters';
+                        clearButton.addEventListener('click', () => {
+                            searchInput.value = '';
+                            tagFilter.value = '';
+                            noteFilter.value = 'all';
+                            refresh();
+                        });
+                        empty.appendChild(clearButton);
+                    } else if (!isTrash && !hasActiveNotes) {
+                        const createButton = document.createElement('button');
+                        createButton.type = 'button';
+                        createButton.className = 'btn btn-primary';
+                        createButton.innerHTML = '<i class="fa-solid fa-plus" aria-hidden="true"></i> Create your first note';
+                        createButton.addEventListener('click', () => btnNew.click());
+                        empty.appendChild(createButton);
+                    }
+                    notesGrid.appendChild(empty);
+                    return;
+                }
+
+                notesToRender.forEach(note => {
+                    const card = document.createElement('div');
+                    card.className = `note-card${note.deleted ? ' is-trash' : ''}${note.favorite ? ' is-favorite' : ''}`;
+
+                    const textWrap = document.createElement('div');
+                    textWrap.innerHTML = `
+                        <div class="note-title">${escapeHTML(note.title)}</div>
+                        <div class="note-meta">${(Array.isArray(note.tags) ? note.tags : []).map(tag => `<span class="note-tag">${escapeHTML(tag)}</span>`).join('')}</div>
+                        <div class="note-body">${escapeHTML(note.body)}</div>
+                    `;
+
+                    const imageStrip = document.createElement('div');
+                    imageStrip.className = 'note-images';
+                    (Array.isArray(note.images) ? note.images : []).forEach(path => {
+                        getImageUrl(path).then(url => {
+                            if (!url) return;
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.target = '_blank';
+                            link.rel = 'noopener noreferrer';
+                            link.title = 'Open attached image';
+                            const image = document.createElement('img');
+                            image.src = url;
+                            image.alt = 'Attached image';
+                            link.appendChild(image);
+                            imageStrip.appendChild(link);
+                        });
+                    });
+
+                    const footer = document.createElement('div');
+                    footer.className = 'note-footer';
+                    const editedDate = note.updated_at ? new Date(note.updated_at).toLocaleDateString('en-US') : note.date;
+                    footer.innerHTML = `<span class="note-date">${note.deleted ? 'In trash' : 'Edited'} · ${escapeHTML(editedDate || '')}</span><div class="note-actions"></div>`;
+
+                    const actions = footer.querySelector('.note-actions');
+
+                    const seeButton = document.createElement('button');
+                    seeButton.type = 'button';
+                    seeButton.className = 'icon-btn see';
+                    seeButton.title = 'View note';
+                    seeButton.setAttribute('aria-label', 'View note');
+                    seeButton.innerHTML = '<i class="fa-solid fa-eye"></i>';
+                    seeButton.hidden = !!note.deleted;
+                    seeButton.addEventListener('click', () => openNoteView(note));
+
+                    const copyButton = document.createElement('button');
+                    copyButton.type = 'button';
+                    copyButton.className = 'icon-btn copy';
+                    copyButton.title = 'Copy text to clipboard';
+                    copyButton.innerHTML = '<i class="fa-regular fa-copy"></i>';
+                    copyButton.hidden = !!note.deleted;
+                    copyButton.addEventListener('click', () => copyToClipboard(note.body));
+
+                    const editButton = document.createElement('button');
+                    editButton.type = 'button';
+                    editButton.className = 'icon-btn edit';
+                    editButton.title = 'Edit note';
+                    editButton.innerHTML = '<i class="fa-solid fa-pen"></i>';
+                    editButton.hidden = !!note.deleted;
+                    editButton.addEventListener('click', () => editNote(note.id));
+
+                    const deleteButton = document.createElement('button');
+                    deleteButton.type = 'button';
+                    deleteButton.className = note.deleted ? 'icon-btn restore' : 'icon-btn delete';
+                    deleteButton.title = note.deleted ? 'Restore note' : 'Move to trash';
+                    deleteButton.setAttribute('aria-label', deleteButton.title);
+                    deleteButton.innerHTML = note.deleted ? '<i class="fa-solid fa-trash-arrow-up"></i>' : '<i class="fa-solid fa-trash"></i>';
+                    deleteButton.addEventListener('click', () => note.deleted ? restoreNote(note.id) : deleteNote(note.id));
+
+                    const favoriteButton = document.createElement('button');
+                    favoriteButton.type = 'button';
+                    favoriteButton.className = `icon-btn favorite${note.favorite ? ' active' : ''}`;
+                    favoriteButton.title = note.favorite ? 'Remove from favorites' : 'Add to favorites';
+                    favoriteButton.setAttribute('aria-label', favoriteButton.title);
+                    favoriteButton.innerHTML = `<i class="${note.favorite ? 'fa-solid' : 'fa-regular'} fa-star"></i>`;
+                    favoriteButton.hidden = !!note.deleted;
+                    favoriteButton.addEventListener('click', () => toggleFavorite(note.id));
+
+                    actions.append(seeButton, copyButton, favoriteButton, editButton, deleteButton);
+                    card.append(textWrap, imageStrip, footer);
+                    notesGrid.appendChild(card);
+                });
+            }
+
+            function openNoteView(note) {
+                viewedNoteId = note.id;
+                noteViewTitle.textContent = note.title || 'Untitled';
+                noteViewDate.textContent = note.date || '';
+                noteViewBody.textContent = note.body || '';
+                noteViewImages.replaceChildren();
+                noteViewModal.classList.remove('hidden');
+                noteViewModal.setAttribute('aria-hidden', 'false');
+
+                (Array.isArray(note.images) ? note.images : []).forEach(path => {
+                    getImageUrl(path).then(url => {
+                        if (!url || viewedNoteId !== note.id) return;
+                        const image = document.createElement('img');
+                        image.src = url;
+                        image.alt = 'Attached image';
+                        noteViewImages.appendChild(image);
+                    });
+                });
+                btnCloseNoteView.focus();
+            }
+
+            function closeNoteView() {
+                viewedNoteId = null;
+                noteViewModal.classList.add('hidden');
+                noteViewModal.setAttribute('aria-hidden', 'true');
+            }
+
+            btnCloseNoteView.addEventListener('click', closeNoteView);
+            noteViewModal.addEventListener('click', event => {
+                if (event.target === noteViewModal) closeNoteView();
+            });
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && notesContainer.classList.contains('search-open')) {
+                    setSearchOpen(false);
+                }
+                if (event.key === 'Escape' && !noteViewModal.classList.contains('hidden')) closeNoteView();
+                if (event.key === 'Escape' && !noteModal.classList.contains('hidden')) closeEditor();
+                if (event.key === 'Escape' && !importModal.classList.contains('hidden')) closeImportModal();
+                if (event.key === 'Escape' && !authModal.classList.contains('hidden')) authModal.classList.add('hidden');
+                if (event.key === 'Escape' && !settingsModal.classList.contains('hidden')) closeSettings();
+            });
+
+            window.addEventListener('beforeunload', event => {
+                if (noteModal.classList.contains('hidden') || editorValues() === editorBaseline) return;
+                saveDraftNow();
+                event.preventDefault();
+                event.returnValue = '';
+            });
+
+            // Global functions for card actions
+            window.editNote = function(id) {
+                const note = notes.find(n => n.id === id);
+                if (note) {
+                    currentEditId = id;
+                    modalTitle.textContent = 'Edit note';
+                    const draft = loadDraft();
+                    noteTitleInput.value = draft?.title ?? note.title;
+                    noteBodyInput.value = draft?.body ?? note.body;
+                    noteTagsInput.value = (draft?.tags ?? note.tags ?? []).join(', ');
+                    noteFavoriteInput.checked = draft?.favorite ?? !!note.favorite;
+                    draftStatus.textContent = draft ? 'Draft restored' : '';
+                    attachedImagePaths = Array.isArray(note.images) ? [...note.images] : [];
+                    clearSelectedImages();
+                    renderAttachmentPreviews();
+                    openEditor();
+                }
+            }
+
+            window.deleteNote = function(id) {
+                if (confirm('Move this note to Trash? You can restore it later.')) {
+                    // No se elimina del arreglo: se marca como borrada para que el borrado se sincronice
+                    notes = notes.map(n => n.id === id ? { ...n, deleted: true, updated_at: Date.now() } : n);
+                    saveAndRefresh();
+                }
+            }
+
+            function restoreNote(id) {
+                notes = notes.map(note => note.id === id ? { ...note, deleted: false, updated_at: Date.now() } : note);
+                saveAndRefresh();
+            }
+
+            function toggleFavorite(id) {
+                notes = notes.map(note => note.id === id ? { ...note, favorite: !note.favorite, updated_at: Date.now() } : note);
+                saveAndRefresh();
+            }
+
+            window.copyToClipboard = function(text) {
+                const content = String(text ?? '');
+                navigator.clipboard.writeText(content).then(() => {
+                    showToast('Copied');
+                }).catch(err => {
+                    console.error('Error al copiar: ', err);
+                    showToast("Couldn't copy");
+                });
+            }
+
+            // Real-time search
+            searchInput.addEventListener('input', refresh);
+            function setSearchOpen(isOpen) {
+                notesContainer.classList.toggle('search-open', isOpen);
+                btnSearchToggle.setAttribute('aria-expanded', String(isOpen));
+                if (isOpen) searchInput.focus();
+            }
+            btnSearchToggle.addEventListener('click', () => {
+                setSearchOpen(!notesContainer.classList.contains('search-open'));
+            });
+            searchInput.addEventListener('blur', () => {
+                window.setTimeout(() => {
+                    if (document.activeElement !== btnSearchToggle
+                        && !document.querySelector('.search-bar').contains(document.activeElement)) {
+                        setSearchOpen(false);
+                    }
+                }, 0);
+            });
+            btnClearSearch.addEventListener('click', () => {
+                searchInput.value = '';
+                searchInput.focus();
+                refresh();
+            });
+            document.querySelectorAll('[data-note-filter]').forEach(button => {
+                button.addEventListener('click', () => {
+                    noteFilter.value = button.dataset.noteFilter;
+                    refresh();
+                });
+            });
+            noteFilter.addEventListener('change', refresh);
+            tagFilter.addEventListener('change', refresh);
+            noteSort.addEventListener('change', refresh);
+            btnSync.addEventListener('click', () => {
+                if (!session) {
+                    openAuth();
+                    return;
+                }
+                syncNow();
+            });
+
+            // Export to JSON
+            btnExport.addEventListener('click', () => {
+                const exportable = notes
+                    .filter(n => !n.deleted)
+                    .map(({ id, title, body, date, images, tags, favorite, created_at, updated_at }) => ({
+                        id, title, body, date, images: images || [], tags: tags || [], favorite: !!favorite, created_at, updated_at
+                    }));
+                const fileName = `quick_notes_${Date.now()}.json`;
+                const contents = JSON.stringify(exportable, null, 2);
+                if (window.AndroidBridge && typeof window.AndroidBridge.saveText === 'function') {
+                    window.AndroidBridge.saveText(fileName, 'application/json', contents);
+                    return;
+                }
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(contents);
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute("download", fileName);
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+            });
+
+            // Import from JSON
+            importFile.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const fileReader = new FileReader();
+                fileReader.onload = (event) => {
+                    try {
+                        const parsed = JSON.parse(event.target.result);
+                        const importedNotes = Array.isArray(parsed) ? parsed : parsed?.notes;
+                        if (!Array.isArray(importedNotes)) {
+                            throw new Error('Invalid notes format');
+                        }
+                        importPendingNotes = importedNotes.filter(note => note && typeof note === 'object');
+                        importModalSummary.textContent = `${importPendingNotes.length} note(s) are ready to import. Merge keeps your current notes; Replace moves current notes to Trash first.`;
+                        importModal.classList.remove('hidden');
+                        importModal.setAttribute('aria-hidden', 'false');
+                        btnImportMerge.focus();
+                    } catch (error) {
+                        console.error('Could not parse imported notes:', error);
+                        alert('The selected file is not a valid Quick Notes JSON export.');
+                    } finally {
+                        importFile.value = '';
+                    }
+                };
+                fileReader.onerror = () => {
+                    importFile.value = '';
+                    alert('The notes file could not be read.');
+                };
+                fileReader.readAsText(file, 'UTF-8');
+            });
+
+            function closeImportModal() {
+                importPendingNotes = null;
+                importModal.classList.add('hidden');
+                importModal.setAttribute('aria-hidden', 'true');
+            }
+
+            function applyImport(replaceExisting) {
+                if (!importPendingNotes) return;
+                if (replaceExisting && !confirm('Replace all current active notes? They will be moved to Trash and can be restored later.')) return;
+
+                const now = Date.now();
+                const merged = new Map(notes.map(note => [
+                    note.id,
+                    replaceExisting && !note.deleted ? { ...note, deleted: true, updated_at: now } : note
+                ]));
+                let importedCount = 0;
+                let skippedCount = 0;
+                importPendingNotes.forEach((note, index) => {
+                    const id = String(note.id ?? `${now}-${index}`);
+                    if (!replaceExisting && merged.has(id)) {
+                        skippedCount++;
+                        return;
+                    }
+                    merged.set(id, {
+                        ...merged.get(id),
+                        id,
+                        title: String(note.title || 'Untitled'),
+                        body: String(note.body || ''),
+                        images: Array.isArray(note.images) ? note.images.filter(path => typeof path === 'string') : [],
+                        tags: Array.isArray(note.tags) ? parseTags(note.tags.join(',')) : [],
+                        favorite: !!note.favorite,
+                        date: String(note.date || new Date().toLocaleDateString('en-US')),
+                        created_at: Number(note.created_at) || now,
+                        updated_at: now,
+                        deleted: false
+                    });
+                    importedCount++;
+                });
+                notes = Array.from(merged.values());
+                closeImportModal();
+                saveAndRefresh();
+                alert(`${importedCount} note(s) imported${skippedCount ? `; ${skippedCount} duplicate(s) kept unchanged` : ''}.`);
+            }
+
+            btnImportMerge.addEventListener('click', () => applyImport(false));
+            btnImportReplace.addEventListener('click', () => applyImport(true));
+            btnImportCancel.addEventListener('click', closeImportModal);
+            importModal.addEventListener('click', event => {
+                if (event.target === importModal) closeImportModal();
+            });
+
+            // ================= Autenticación =================
+            async function initAuth() {
+                if (!sb) {
+                    setStatus('error', 'Supabase is unavailable. Notes remain on this device.');
+                    return;
+                }
+                try {
+                    const { data, error } = await sb.auth.getSession();
+                    if (error) throw error;
+                    session = data.session;
+                    sb.auth.onAuthStateChange((_event, newSession) => {
+                        session = newSession;
+                        updateAuthUI();
+                        if (session) {
+                            localStorage.setItem('quick_notes_auth_prompt_seen', 'true');
+                            syncNow();
+                        } else if (localStorage.getItem('quick_notes_auth_prompt_seen') !== 'true') {
+                            localStorage.setItem('quick_notes_auth_prompt_seen', 'true');
+                            openAuth();
+                        }
+                    });
+                    updateAuthUI();
+                    if (session) syncNow();
+                } catch (error) {
+                    console.error('Could not initialize note sync:', error);
+                    setStatus('error', `Local on this device · ${error.message || 'Could not connect'}`);
+                }
+            }
+
+            function updateAuthUI() {
+                if (session) {
+                    btnAuth.title = 'Sign out (' + session.user.email + ')';
+                    btnAuth.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i>';
+                    btnSync.title = 'Sync now';
+                } else {
+                    btnAuth.title = 'Sign in';
+                    btnAuth.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i>';
+                    btnSync.title = 'Sign in to sync';
+                    if (syncStatus.classList.contains('syncing') || syncStatus.classList.contains('ok')) {
+                        setStatus('local', 'Local on this device');
+                    }
+                }
+                updateSettingsUI();
+            }
+
+            function updateSettingsUI() {
+                settingsAccountStatus.textContent = session
+                    ? `Signed in as ${session.user.email}. Sync is available.`
+                    : 'Not signed in. Notes are saved locally on this device.';
+                darkModeToggle.checked = document.documentElement.classList.contains('dark-mode');
+                btnSettingsSignin.hidden = !!session;
+                btnSettingsSignout.hidden = !session;
+                settingsSignoutConfirm.hidden = true;
+                settingsError.textContent = '';
+            }
+
+            function openSettings() {
+                updateSettingsUI();
+                settingsModal.classList.remove('hidden');
+                settingsModal.setAttribute('aria-hidden', 'false');
+                btnSettingsClose.focus();
+            }
+
+            function closeSettings() {
+                settingsModal.classList.add('hidden');
+                settingsModal.setAttribute('aria-hidden', 'true');
+            }
+
+            function showToast(message) {
+                appToast.textContent = message;
+                appToast.classList.add('visible');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => appToast.classList.remove('visible'), 1800);
+            }
+
+            function openAuth() {
+                authError.textContent = '';
+                authModal.classList.remove('hidden');
+                authEmail.focus();
+            }
+
+            btnAuth.addEventListener('click', openSettings);
+            btnAccount.addEventListener('click', openSettings);
+            btnSettingsClose.addEventListener('click', closeSettings);
+            btnSettingsCloseAction.addEventListener('click', closeSettings);
+            settingsModal.addEventListener('click', event => {
+                if (event.target === settingsModal) closeSettings();
+            });
+            btnSettingsSignin.addEventListener('click', () => {
+                settingsOpenedAuth = true;
+                closeSettings();
+                openAuth();
+            });
+            darkModeToggle.addEventListener('change', () => {
+                const enabled = darkModeToggle.checked;
+                try {
+                    localStorage.setItem('quick_notes_dark_mode', String(enabled));
+                    document.documentElement.classList.toggle('dark-mode', enabled);
+                } catch (error) {
+                    darkModeToggle.checked = !enabled;
+                    console.error('Could not save theme preference:', error);
+                    showToast("Couldn't save theme");
+                }
+            });
+            btnSettingsSignout.addEventListener('click', () => {
+                settingsError.textContent = '';
+                settingsSignoutConfirm.hidden = false;
+                btnSettingsSignoutConfirm.focus();
+            });
+            btnSettingsSignoutCancel.addEventListener('click', () => {
+                settingsSignoutConfirm.hidden = true;
+                btnSettingsSignout.focus();
+            });
+            btnSettingsSignoutConfirm.addEventListener('click', async () => {
+                if (!sb) {
+                    settingsError.textContent = 'Could not load account services. Check your internet connection.';
+                    return;
+                }
+                btnSettingsSignoutConfirm.disabled = true;
+                settingsError.textContent = '';
+                try {
+                    const { error } = await sb.auth.signOut();
+                    if (error) throw error;
+                    session = null;
+                    updateAuthUI();
+                } catch (error) {
+                    settingsError.textContent = `Could not sign out: ${error.message}`;
+                } finally {
+                    btnSettingsSignoutConfirm.disabled = false;
+                }
+            });
+            btnAuthCancel.addEventListener('click', () => {
+                authModal.classList.add('hidden');
+                if (settingsOpenedAuth) {
+                    settingsOpenedAuth = false;
+                    openSettings();
+                }
+            });
+
+            async function doLogin() {
+                const email = authEmail.value.trim();
+                const password = authPassword.value;
+                if (!email || !password) {
+                    authError.textContent = 'Enter your email and password.';
+                    return;
+                }
+                btnLogin.disabled = true;
+                authError.textContent = '';
+                try {
+                    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+                    if (error) throw error;
+                    session = data.session;
+                    authPassword.value = '';
+                    authModal.classList.add('hidden');
+                    settingsOpenedAuth = false;
+                    updateAuthUI();
+                    syncNow();
+                } catch (error) {
+                    authError.textContent = 'Sign-in failed: ' + error.message;
+                } finally {
+                    btnLogin.disabled = false;
+                }
+            }
+
+            btnLogin.addEventListener('click', doLogin);
+            authPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+
+            // ================= Sync =================
+            function setStatus(state, text) {
+                const icons = {
+                    local: 'fa-cloud',
+                    syncing: 'fa-rotate fa-spin',
+                    ok: 'fa-cloud-arrow-up',
+                    error: 'fa-triangle-exclamation'
+                };
+                syncStatus.className = 'sync-status ' + state;
+                syncStatus.innerHTML = `<i class="fa-solid ${icons[state] || icons.local}"></i><span>${escapeHTML(text || '')}</span>`;
+                syncStatus.title = text || '';
+                btnSync.disabled = state === 'syncing';
+            }
+
+            function fromRemote(r) {
+                return {
+                    id: String(r.id),
+                    title: r.title || 'Untitled',
+                    body: r.body || '',
+                    images: Array.isArray(r.images) ? r.images.filter(path => typeof path === 'string') : [],
+                    tags: Array.isArray(r.tags) ? r.tags.filter(tag => typeof tag === 'string') : [],
+                    favorite: !!r.favorite,
+                    date: r.date || '',
+                    created_at: Date.parse(r.created_at) || 0,
+                    updated_at: Date.parse(r.updated_at) || 0,
+                    deleted: !!r.deleted
+                };
+            }
+
+            function toRow(n) {
+                return {
+                    user_id: session.user.id,
+                    id: String(n.id),
+                    title: n.title,
+                    body: n.body,
+                    images: Array.isArray(n.images) ? n.images : [],
+                    tags: Array.isArray(n.tags) ? n.tags : [],
+                    favorite: !!n.favorite,
+                    date: n.date,
+                    created_at: new Date(createdAt(n)).toISOString(),
+                    updated_at: new Date(n.updated_at).toISOString(),
+                    deleted: !!n.deleted
+                };
+            }
+
+            async function syncNow() {
+                if (!sb || !session) {
+                    if (!session) setStatus('local', 'Local on this device · sign in to sync');
+                    return;
+                }
+                if (syncing) { syncPending = true; return; }
+                syncing = true;
+                setStatus('syncing', 'Syncing...');
+                try {
+                    const { data: remote, error } = await sb
+                        .from('notes')
+                        .select('id,title,body,images,tags,favorite,date,created_at,updated_at,deleted')
+                        .limit(5000);
+                    if (error) throw error;
+
+                    const remoteMap = new Map(remote.map(r => [String(r.id), r]));
+                    const localIds = new Set(notes.map(n => String(n.id)));
+                    const toPush = [];
+
+                    // Gana la versión más reciente (por updated_at)
+                    notes = notes.map(n => {
+                        const r = remoteMap.get(String(n.id));
+                        if (!r) { toPush.push(n); return n; }
+                        const remoteTs = Date.parse(r.updated_at) || 0;
+                        if (n.updated_at > remoteTs) { toPush.push(n); return n; }
+                        if (remoteTs > n.updated_at) return fromRemote(r);
+                        return n;
+                    });
+
+                    // Notes that only exist in the cloud
+                    remote.forEach(r => {
+                        if (!localIds.has(String(r.id))) notes.push(fromRemote(r));
+                    });
+
+                    if (toPush.length) {
+                        const { error: upErr } = await sb
+                            .from('notes')
+                            .upsert(toPush.map(toRow), { onConflict: 'user_id,id' });
+                        if (upErr) throw upErr;
+                    }
+
+                    // Orden: más recientes (por fecha de creación) primero
+                    notes.sort((a, b) => createdAt(b) - createdAt(a));
+                    persist();
+                    refresh();
+                    const hora = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    setStatus('ok', 'Synced · ' + hora);
+                } catch (err) {
+                    console.error('Sync error:', err);
+                    const detail = err && typeof err === 'object' && 'message' in err ? String(err.message) : 'Unknown sync error';
+                    setStatus('error', `Sync failed · ${detail}`);
+                } finally {
+                    syncing = false;
+                    if (syncPending) { syncPending = false; syncNow(); }
+                }
+            }
+
+            function createdAt(n) {
+                if (Number.isFinite(n.created_at) && n.created_at > 0) return n.created_at;
+                const num = Number(n.id);
+                return Number.isFinite(num) ? num : n.updated_at;
+            }
+
+            // Sync when returning to the app, when internet is restored, and every minute
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') syncNow();
+            });
+            window.addEventListener('online', syncNow);
+            setInterval(syncNow, 60000);
+
+            // ================= Almacenamiento local =================
+            function loadNotes() {
+                try {
+                    const saved = JSON.parse(localStorage.getItem('quick_notes') || '[]');
+                    if (!Array.isArray(saved)) return [];
+                    return saved.filter(note => note && typeof note === 'object').map(note => {
+                        const id = String(note.id ?? Date.now());
+                        const idNum = Number(id);
+                        return {
+                            id,
+                            title: String(note.title || 'Untitled'),
+                            body: String(note.body || ''),
+                            images: Array.isArray(note.images) ? note.images.filter(path => typeof path === 'string') : [],
+                            tags: Array.isArray(note.tags) ? note.tags.filter(tag => typeof tag === 'string') : [],
+                            favorite: !!note.favorite,
+                            date: String(note.date || ''),
+                            created_at: Number(note.created_at) || (Number.isFinite(idNum) ? idNum : Date.parse(note.date) || Date.now()),
+                            updated_at: Number(note.updated_at) || (Number.isFinite(idNum) ? idNum : Date.now()),
+                            deleted: !!note.deleted
+                        };
+                    });
+                } catch (error) {
+                        console.error('Could not load local notes. Existing stored data was left unchanged:', error);
+                        return [];
+                    }
+                }
+
+            function persist() {
+                localStorage.setItem('quick_notes', JSON.stringify(notes));
+            }
+
+            function saveAndRefresh() {
+                persist();
+                refresh();
+                syncNow();
+            }
+
+            function escapeHTML(str) {
+                if (str === null || str === undefined) return '';
+                return String(str).replace(/[&<>'"]/g,
+                    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+                );
+            }
+        });
+    </script>
+</body>
+</html>
