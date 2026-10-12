@@ -771,13 +771,14 @@
             background-color: #fffdf9;
         }
         .notes-grid {
-            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            grid-template-columns: minmax(0, 1fr);
             align-content: start;
             gap: 16px;
             padding: 0 0 20px;
         }
         .note-card, body .notes-container .note-card {
-            min-height: 185px;
+            height: auto;
+            min-height: max-content;
             padding: 16px;
             border: 1px solid transparent !important;
             border-radius: 19px;
@@ -804,7 +805,18 @@
             letter-spacing: .045em;
             text-transform: uppercase;
         }
-        .note-body { margin-bottom: 9px; color: #514c44; font-size: .78rem; line-height: 1.5; }
+        .note-body {
+            display: block;
+            max-height: none;
+            margin-bottom: 9px;
+            overflow: visible;
+            flex: 0 0 auto;
+            color: #514c44;
+            font-size: .78rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
         .note-footer { padding-top: 8px; border-top: 0; }
         .note-date { color: #625c51; font-size: .64rem; }
         .note-actions { gap: 1px; }
@@ -890,22 +902,23 @@
             .filter-tab.active { color: #292723; background: transparent; box-shadow: none; }
             .filter-tab-account { display: flex; }
             .notes-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-                grid-auto-rows: minmax(184px, auto);
+                grid-template-columns: minmax(0, 1fr);
+                grid-auto-rows: max-content;
                 align-content: start;
                 gap: 14px;
                 padding: 0 0 calc(80px + env(safe-area-inset-bottom));
             }
             .note-card, body .notes-container .note-card {
                 min-width: 0;
-                min-height: 184px;
+                height: auto;
+                min-height: max-content;
                 padding: 12px;
                 border-radius: 17px;
             }
-            .note-card:nth-child(3n + 1) { grid-column: 1 / -1; }
+            .note-card { grid-column: 1; }
             .note-title { font-size: .92rem; }
-            .note-body { font-size: .72rem; -webkit-line-clamp: 3; }
-            .note-images { max-height: 44px; }
+            .note-body { font-size: .82rem; }
+            .note-images { max-height: none; }
             .note-images a, .note-images img { width: 42px; height: 42px; }
             .note-footer { align-items: stretch; flex-direction: column; gap: 4px; }
             .note-date { width: 100%; }
